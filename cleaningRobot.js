@@ -23,10 +23,6 @@ class World {
                     this.lastLocation = 3;
                     this.location = 2;
                 }   
-                else if(this.location == 2){
-                    this.lastLocation = 2;
-                    this.location = 1;
-                }
                 else if(this.location == 1){
                     this.lastLocation = 1;
                     this.location = 0;
@@ -37,15 +33,31 @@ class World {
                     this.location = 1;
                     this.lastLocation = 0
                 } 
-                else if(this.location == 1){
-                    this.location = 2;
-                    this.lastLocation = 1
-                }
                 else if(this.location == 2){
                     this.location = 3;
                     this.lastLocation = 2;
                 }
-                break
+                break;
+            case 'UP':
+                    if(this.location == 2){
+                        this.lastLocation = 2;
+                        this.location = 0;
+                    }   
+                    else if(this.location == 3){
+                        this.lastLocation = 3;
+                        this.location = 1;
+                    }
+                    break;
+            case 'DOWN':
+                    if(this.location == 0){
+                        this.location = 2;
+                        this.lastLocation = 0
+                    } 
+                    else if(this.location == 1){
+                        this.location = 3;
+                        this.lastLocation = 1;
+                    }
+                    break;
             }
 
         return this.location;
@@ -60,32 +72,45 @@ function reflexVacuumAgent(world) {
         return 'SUCK'; 
     }
     else if (world.location == 0) {
-        action = 'RIGHT';
+        if(world.lastLocation == 2){
+            world.lastLocation == 0;
+            action = 'LEFT';
+        } 
+        else {
+            world.lastLocation == 0;
+            action = 'DOWN';
+        }
     }
     else if (world.location == 1) { 
-        if(world.lastLocation == 2){
+        if(world.lastLocation == 3){
             world.lastLocation = 1;
             action = 'LEFT';
         }
         else if(world.lastLocation == 0){
             world.lastLocation = 1;
-            action = 'RIGHT';
+            action = 'DOWN';
         }
     }
     else if (world.location == 2) { 
-        if(world.lastLocation == 1){
+        if(world.lastLocation == 0){
             world.lastLocation = 2;
             action = 'RIGHT';
         }
         else if(world.lastLocation == 3){
             world.lastLocation = 2;
-            action = 'LEFT';
+            action = 'UP';
         }
     }
     else if (world.location == 3) { 
-        action = 'LEFT';
+        if(world.lastLocation == 2){
+            world.lastLocation = 3;
+            action = 'UP';
+        }
+        else if(world.lastLocation == 1){
+            world.lastLocation = 3;
+            action = 'LEFT';
+        }
     }
-    console.log(world.location)
     return action;
 }
 

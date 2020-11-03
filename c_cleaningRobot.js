@@ -21,31 +21,48 @@ function makeDiagram(selector) {
     let diagram = {}, world = new World(4);
     diagram.world = world;
     diagram.xPosition = (floorNumber) => 150 + floorNumber * 600 / diagram.world.floors.length;
+    diagram.yPosition = (ceilNumber) => 225 + ceilNumber * 125
 
     diagram.root = d3.select(selector);
     diagram.robot = diagram.root.append('g')
         .attr('class', 'robot')
-        .style('transform', `translate(${diagram.xPosition(world.location)}px,100px)`);
+        .style('transform', `translate(${diagram.xPosition(world.location)}px,200px)`);
     diagram.robot.append('rect')
         .attr('width', SIZE)
         .attr('height', SIZE)
         .attr('fill', 'hsl(120,25%,50%)');
     diagram.perceptText = diagram.robot.append('text')
         .attr('x', SIZE/2)
-        .attr('y', -25)
+        .attr('y', -10)
         .attr('text-anchor', 'middle');
     diagram.actionText = diagram.robot.append('text')
         .attr('x', SIZE/2)
-        .attr('y', -10)
+        .attr('y', -25)
         .attr('text-anchor', 'middle');
 
     diagram.floors = [];
-    for (let floorNumber = 0; floorNumber < world.floors.length; floorNumber++) {
+    //linha de cima
+    for (let floorNumber = 0; floorNumber < world.floors.length/2; floorNumber++) {
         diagram.floors[floorNumber] =
             diagram.root.append('rect')
             .attr('class', 'clean floor') // for css
             .attr('x', diagram.xPosition(floorNumber))
-            .attr('y', 225)
+            .attr('y', 100)
+            .attr('width', SIZE)
+            .attr('height', SIZE/4)
+            .attr('stroke', 'black')
+            .on('click', function() {
+                world.markFloorDirty(floorNumber);
+                diagram.floors[floorNumber].attr('class', 'dirty floor');
+            });
+    }
+    //linha de baixo
+    for (let floorNumber = world.floors.length/2; floorNumber < world.floors.length; floorNumber++) {
+        diagram.floors[floorNumber] =
+            diagram.root.append('rect')
+            .attr('class', 'clean floor') // for css
+            .attr('x', diagram.xPosition(floorNumber-world.floors.length/2))
+            .attr('y', 350)
             .attr('width', SIZE)
             .attr('height', SIZE/4)
             .attr('stroke', 'black')
@@ -65,21 +82,29 @@ function makeDiagram(selector) {
    animation (agent perceives world, then pauses, then agent acts) I've
    broken up the render function into several. */
 
-function renderWorld(diagram) {
+function renderWorld(diagram, action) {
     for (let floorNumber = 0; floorNumber < diagram.world.floors.length; floorNumber++) {
         diagram.floors[floorNumber].attr('class', diagram.world.floors[floorNumber].dirty? 'dirty floor' : 'clean floor');
     }
-    diagram.robot.style('transform', `translate(${diagram.xPosition(diagram.world.location)}px,100px)`);
+    if(action == 'LEFT' || action == 'RIGHT'){
+        diagram.robot.style('transform', `translate(${diagram.xPosition((diagram.world.location/3))}px,200px)`);
+    }
+        
 }
 
 function renderAgentPercept(diagram, dirty) {
-    let perceptLabel = {false: "It's clean", true: "It's dirty"}[dirty];
+    let perceptLabel = "O quadrado "+ diagram.world.location + ({false: " encontra-se limpo", true: " encontra-se sujo"}[dirty]);
     diagram.perceptText.text(perceptLabel);
 }
 
 function renderAgentAction(diagram, action) {
-    let actionLabel = {null: 'Waiting', 'SUCK': 'Vacuuming', 'LEFT': 'Going left', 'RIGHT': 'Going right'}[action];
+    let actionLabel = {null: 'Esperando', 'SUCK': 'Aspirando', 'LEFT': 'Indo pra esquerda', 'RIGHT': 'Indo pra direita', 'UP': 'Indo pra cima', 'DOWN':'Indo para baixo'}[action];
     diagram.actionText.text(actionLabel);
+}
+
+function renderLocal(diagram){
+    let localLabel = diagram.world.location;
+    diagram.localText.text(localLabel);
 }
 
 
@@ -97,9 +122,9 @@ function makeAgentControlledDiagram() {
         let percept = diagram.world.floors[location].dirty;
         let action = reflexVacuumAgent(diagram.world);
         diagram.world.simulate(action);
-        renderWorld(diagram);
-        renderAgentPercept(diagram, percept);
+        renderWorld(diagram, action);
         renderAgentAction(diagram, action);
+        renderAgentPercept(diagram, percept);
     }
     update();
     setInterval(update, STEP_TIME_MS);
@@ -206,7 +231,11 @@ function makeTableControlledDiagram() {
         let left_dirty = table.select("[data-action=left-dirty] select").node().value;
         let right_clean = table.select("[data-action=right-clean] select").node().value;
         let right_dirty = table.select("[data-action=right-dirty] select").node().value;
-        return [[left_clean, left_dirty], [right_clean, right_dirty]];
+        let up_clean = table.select("[data-action=up-clean] select").node().value;
+        let up_dirty = table.select("[data-action=up-dirty] select").node().value;
+        let down_clean = table.select("[data-action=down-clean] select").node().value;
+        let down_dirty = table.select("[data-action=down-dirty] select").node().value;
+        return [[left_clean, left_dirty], [right_clean, right_dirty], [up_clean, up_dirty], [down_clean, down_dirty]];
     }
 
     function showPerceptAndAction(location, percept, action) {
